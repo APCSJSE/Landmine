@@ -1,6 +1,7 @@
 package com.mrjaffesclass.apcs.mvc.template;
 
 import com.mrjaffesclass.apcs.messenger.*;
+import java.util.Arrays;
 
 /**
  * The model represents the data that the app uses.
@@ -13,8 +14,13 @@ public class Model implements MessageHandler {
   private final Messenger mvcMessaging;
 
   // Model's data variables
+  
+  //points
   private int variable1;
+  //lives
   private int variable2;
+  public static int y;
+  public static int[] array1 = new int[64];
 
   /**
    * Model constructor: Create the data representation of the program
@@ -30,8 +36,13 @@ public class Model implements MessageHandler {
    */
   public void init() {
     mvcMessaging.subscribe("view:changeButton", this);
-    setVariable1(10);
-    setVariable2(-10);
+    mvcMessaging.subscribe("view:BombHit", this);
+    mvcMessaging.subscribe("view:BlankHit", this);
+    setVariable1(0);
+    setVariable2(3);
+    y=0;
+    Arrays.fill(array1,0);
+    addBombs();
   }
   
   @Override
@@ -41,22 +52,16 @@ public class Model implements MessageHandler {
     } else {
       System.out.println("MSG: received by model: "+messageName+" | No data sent");
     }
-    MessagePayload payload = (MessagePayload)messagePayload;
-    int field = payload.getField();
-    int direction = payload.getDirection();
-    
-    if (direction == Constants.UP) {
-      if (field == 1) {
-        setVariable1(getVariable1()+Constants.FIELD_1_INCREMENT);
-      } else {
-        setVariable2(getVariable2()+Constants.FIELD_2_INCREMENT);
-      }
-    } else {
-      if (field == 1) {
-        setVariable1(getVariable1()-Constants.FIELD_1_INCREMENT);
-      } else {
-        setVariable2(getVariable2()-Constants.FIELD_2_INCREMENT);
-      }      
+    if(messageName.equals("view:Buttonclick")) {
+     mvcMessaging.notify("model:ArraySent", array1[y], true);
+    }
+    if(messageName.equals("view:BombHit")) {
+     mvcMessaging.notify("model:variable2Changed", (variable2=variable2-1), true);
+     y=y+1;
+    }
+    if(messageName.equals("view:BlankHit")) {
+     mvcMessaging.notify("model:variable1Changed", (variable1=variable1+1), true);
+     y=y+1;
     }
   }
 
@@ -66,6 +71,10 @@ public class Model implements MessageHandler {
    */
   public int getVariable1() {
     return variable1;
+  }
+  
+  public int[] getArray1(){
+     return array1;
   }
 
   /**
@@ -100,4 +109,9 @@ public class Model implements MessageHandler {
     mvcMessaging.notify("model:variable2Changed", variable2, true);
   }
 
+  public void addBombs(){
+      for(int x=0;x<=10;x++){
+        array1[((int)((Math.random()*64)))-1]=1;
+    }
+  }
 }
